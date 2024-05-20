@@ -1,0 +1,260 @@
+https://blog.stackademic.com/advanced-end-to-end-devsecops-kubernetes-three-tier-project-using-aws-eks-argocd-prometheus-fbbfdb956d1a
+
+Project Introduction:
+Welcome to the End-to-End DevSecOps Kubernetes Project guide! In this comprehensive project, we will walk through the process of setting up a robust Three-Tier architecture on AWS using Kubernetes, DevOps best practices, and security measures. This project aims to provide hands-on experience in deploying, securing, and monitoring a scalable application environment.
+
+Project Overview:
+In this project, we will cover the following key aspects:
+
+IAM User Setup: Create an IAM user on AWS with the necessary permissions to facilitate deployment and management activities.
+Infrastructure as Code (IaC): Use Terraform and AWS CLI to set up the Jenkins server (EC2 instance) on AWS.
+Jenkins Server Configuration: Install and configure essential tools on the Jenkins server, including Jenkins itself, Docker, Sonarqube, Terraform, Kubectl, AWS CLI, and Trivy.
+EKS Cluster Deployment: Utilize eksctl commands to create an Amazon EKS cluster, a managed Kubernetes service on AWS.
+Load Balancer Configuration: Configure AWS Application Load Balancer (ALB) for the EKS cluster.
+Amazon ECR Repositories: Create private repositories for both frontend and backend Docker images on Amazon Elastic Container Registry (ECR).
+ArgoCD Installation: Install and set up ArgoCD for continuous delivery and GitOps.
+Sonarqube Integration: Integrate Sonarqube for code quality analysis in the DevSecOps pipeline.
+Jenkins Pipelines: Create Jenkins pipelines for deploying backend and frontend code to the EKS cluster.
+Monitoring Setup: Implement monitoring for the EKS cluster using Helm, Prometheus, and Grafana.
+ArgoCD Application Deployment: Use ArgoCD to deploy the Three-Tier application, including database, backend, frontend, and ingress components.
+DNS Configuration: Configure DNS settings to make the application accessible via custom subdomains.
+Data Persistence: Implement persistent volume and persistent volume claims for database pods to ensure data persistence.
+Conclusion and Monitoring: Conclude the project by summarizing key achievements and monitoring the EKS cluster’s performance using Grafana.
+Prerequisites:
+Before starting the project, ensure you have the following prerequisites:
+
+An AWS account with the necessary permissions to create resources.
+Terraform and AWS CLI installed on your local machine.
+Basic familiarity with Kubernetes, Docker, Jenkins, and DevOps principles.
+Step 1: We need to create an IAM user and generate the AWS Access key
+Create a new IAM User on AWS and give it to the AdministratorAccess for testing purposes (not recommended for your Organization's Projects)
+
+Go to the AWS IAM Service and click on Users.
+
+Click on Create user
+
+
+Provide the name to your user and click on Next.
+
+
+Select the Attach policies directly option and search for AdministratorAccess then select it.
+
+Click on the Next.
+
+
+Click on Create user
+
+
+Now, Select your created user then click on Security credentials and generate access key by clicking on Create access key.
+
+
+Select the Command Line Interface (CLI) then select the checkmark for the confirmation and click on Next.
+
+
+Provide the Description and click on the Create access key.
+
+
+Here, you will see that you got the credentials and also you can download the CSV file for the future.
+
+
+Step 2: We will install Terraform & AWS CLI to deploy our Jenkins Server(EC2) on AWS.
+Install & Configure Terraform and AWS CLI on your local machine to create Jenkins Server on AWS Cloud
+Terraform Installation Script
+
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg - dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update
+sudo apt install terraform -y
+AWSCLI Installation Script
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo apt install unzip -y
+unzip awscliv2.zip
+sudo ./aws/install
+Now, Configure both the tools
+
+Configure Terraform
+
+Edit the file /etc/environment using the below command add the highlighted lines and add your keys in the blur space.
+
+sudo vim /etc/environment
+
+After doing the changes, restart your machine to reflect the changes of your environment variables.
+
+Configure AWS CLI
+
+Run the below command, and add your keys
+
+aws configure
+
+Step 3: Deploy the Jenkins Server(EC2) using Terraform
+Clone the Git repository- https://github.com/AmanPathak-DevOps/End-to-End-Kubernetes-Three-Tier-DevSecOps-Project
+
+Navigate to the Jenkins-Server-TF
+
+Do some modifications to the backend.tf file such as changing the bucket name and dynamodb table(make sure you have created both manually on AWS Cloud).
+
+
+Now, you have to replace the Pem File name as you have some other name for your Pem file. To provide the Pem file name that is already created on AWS
+
+
+Initialize the backend by running the below command
+
+terraform init
+
+Run the below command to check the syntax error
+
+terraform validate
+
+Run the below command to get the blueprint of what kind of AWS services will be created.
+
+terraform plan -var-file=variables.tfvars
+
+Now, run the below command to create the infrastructure on AWS Cloud which will take 3 to 4 minutes maximum
+
+terraform apply -var-file=variables.tfvars --auto-approve
+
+Now, connect to your Jenkins-Server by clicking on Connect.
+
+
+Copy the ssh command and paste it on your local machine.
+
+
+Step 4: Configure the Jenkins
+Now, we logged into our Jenkins server.
+
+
+We have installed some services such as Jenkins, Docker, Sonarqube, Terraform, Kubectl, AWS CLI, and Trivy.
+
+Let’s validate whether all our installed or not.
+
+jenkins --version
+docker --version
+docker ps
+terraform --version
+kubectl version
+aws --version
+trivy --version
+eksctl --version
+
+
+Now, we have to configure Jenkins. So, copy the public IP of your Jenkins Server and paste it on your favorite browser with an 8080 port.
+
+
+Click on Install suggested plugins
+
+
+The plugins will be installed
+
+
+After installing the plugins, continue as admin
+
+
+Click on Save and Finish
+
+
+Click on Start using Jenkins
+
+
+The Jenkins Dashboard will look like the below snippet
+
+
+Step 5: We will deploy the EKS Cluster using eksctl commands
+Now, go back to your Jenkins Server terminal and configure the AWS.
+
+
+Go to Manage Jenkins
+
+Click on Plugins
+
+
+Select the Available plugins install the following plugins and click on Install
+
+AWS Credentials
+
+Pipeline: AWS Steps
+
+
+Once, both the plugins are installed, restart your Jenkins service by checking the Restart Jenkins option.
+
+
+Login to your Jenkins Server Again
+
+
+Now, we have to set our AWS credentials on Jenkins
+
+Go to Manage Plugins and click on Credentials
+
+
+Click on global.
+
+
+Select AWS Credentials as Kind and add the ID same as shown in the below snippet except for your AWS Access Key & Secret Access key and click on Create.
+
+
+The Credentials will look like the below snippet.
+
+
+Now, We need to add GitHub credentials as well because currently, my repository is Private.
+
+This thing, I am performing this because in Industry Projects your repository will be private.
+
+So, add the username and personal access token of your GitHub account.
+
+
+Both credentials will look like this.
+
+
+Create an eks cluster using the below commands.
+
+eksctl create cluster --name Three-Tier-K8s-EKS-Cluster --region us-east-1 --node-type t2.medium --nodes-min 2 --nodes-max 2
+aws eks update-kubeconfig --region us-east-1 --name Three-Tier-K8s-EKS-Cluster
+
+Once your cluster is created, you can validate whether your nodes are ready or not by the below command
+
+kubectl get nodes
+
+Step 6: Now, we will configure the Load Balancer on our EKS because our application will have an ingress controller.
+Download the policy for the LoadBalancer prerequisite.
+
+curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.5.4/docs/install/iam_policy.json
+
+Create the IAM policy using the below command
+
+aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+
+Create OIDC Provider
+
+eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=Three-Tier-K8s-EKS-Cluster --approve
+
+Create a Service Account by using below command and replace your account ID with your one
+
+eksctl create iamserviceaccount --cluster=Three-Tier-K8s-EKS-Cluster --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::<your_account_id>:policy/AWSLoadBalancerControllerIAMPolicy --approve --region=us-east-1
+
+Run the below command to deploy the AWS Load Balancer Controller
+
+sudo snap install helm --classic
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update eks
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=my-cluster --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
+After 2 minutes, run the command below to check whether your pods are running or not.
+
+kubectl get deployment -n kube-system aws-load-balancer-controller
+
+Step 7: We need to create Amazon ECR Private Repositories for both Tiers (Frontend & Backend)
+Click on Create repository
+
+
+Select the Private option to provide the repository and click on Save.
+
+
+Do the same for the backend repository and click on Save
+
+
+Now, we have set up our ECR Private Repository and
+
+
+Now, we need to configure ECR locally because we have to upload our images to Amazon ECR.
+
+Copy the 1st command for login
+
